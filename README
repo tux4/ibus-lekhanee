@@ -1,12 +1,14 @@
-Input Method for Indic Languages for IBus. 
+Input Method for Indic Languages for IBus.
 Prasanna Suman
 
-This is a quick and dirty code as a proof of concept for better IM for Indic Languages based on IBus template. 
+This is a quick and dirty code as a proof of concept for better IM for Indic Languages based on IBus template.
 I have been working with Nepali as an example although I plan to make it easily extendible for other Indic scripts.
 
 To run, make sure your IBus daemon is running. [Alt]+[F2]:ibus-daemon
 Next, run python ./engine/main.py
  
-The standard IBus shortcuts are used to activate and change the IM, so use [Ctrl]+[Space] to start, [Alt]+[/] to switch.
+ The standard IBus shortcuts are used to activate and change the IM, so use [Ctrl]+[Space] to start, [Alt]+[/] to switch.
 
-GPL2
+ GPL2
+
+
