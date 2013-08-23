@@ -19,11 +19,13 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 import enchant
-
+import full_map_np
+import trans
 from gi.repository import GLib
 from gi.repository import IBus
 from gi.repository import Pango
-
+#import panel
+#from panel import HelloWorld
 keysyms = IBus
 
 class EngineEnchant(IBus.Engine):
@@ -38,7 +40,9 @@ class EngineEnchant(IBus.Engine):
         self.__prop_list = IBus.PropList()
         self.__prop_list.append(IBus.Property(key="test", icon="ibus-local"))
         print "Create EngineEnchant OK"
-
+        #self.__panel = panel.HelloWorld()
+        print "Panel Creation Done"
+        self.__transliterator = trans.transliterator(full_map_np.default)
     def do_process_key_event(self, keyval, keycode, state):
         print "process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state)
         # ignore key release events
@@ -48,6 +52,7 @@ class EngineEnchant(IBus.Engine):
 
         if self.__preedit_string:
             if keyval == keysyms.Return:
+                print type(self.__preedit_string)
                 self.__commit_string(self.__preedit_string)
                 return True
             elif keyval == keysyms.Escape:
@@ -60,9 +65,12 @@ class EngineEnchant(IBus.Engine):
                 return True
             elif keyval == keysyms.space:
                 if self.__lookup_table.get_number_of_candidates() > 0:
-                    self.__commit_string(self.__lookup_table.get_current_candidate().text)
+                    cur_pos = self.__lookup_table.get_cursor_pos()
+                    text = IBus.Text.get_text(self.__lookup_table.get_candidate(cur_pos))
+                    self.__commit_string(text)
                 else:
-                    self.__commit_string(self.__preedit_string)
+                      self.__commit_string(self.__transliterator.transliterate(self.__preedit_string))
+                #self.__commit_string(self.__preedit_string)
                 return False
             elif keyval >= 49 and keyval <= 57:
                 #keyval >= keysyms._1 and keyval <= keysyms._9
@@ -74,18 +82,20 @@ class EngineEnchant(IBus.Engine):
                 self.__commit_string(candidate)
                 return True
             elif keyval == keysyms.Page_Up or keyval == keysyms.KP_Page_Up:
-                self.page_up()
+                self.do_page_up()
                 return True
             elif keyval == keysyms.Page_Down or keyval == keysyms.KP_Page_Down:
-                self.page_down()
+                self.do_page_down()
                 return True
             elif keyval == keysyms.Up:
-                self.cursor_up()
+                self.do_cursor_up()
                 return True
             elif keyval == keysyms.Down:
-                self.cursor_down()
+                self.do_cursor_down()
                 return True
             elif keyval == keysyms.Left or keyval == keysyms.Right:
+                print "table"
+                self.show_lookup_table()
                 return True
         if keyval in xrange(keysyms.a, keysyms.z + 1) or \
             keyval in xrange(keysyms.A, keysyms.Z + 1):
@@ -108,30 +118,39 @@ class EngineEnchant(IBus.Engine):
 
     def do_page_up(self):
         if self.__lookup_table.page_up():
-            self.page_up_lookup_table()
+            #self.page_up_lookup_table()
             return True
         return False
 
     def do_page_down(self):
         if self.__lookup_table.page_down():
-            self.page_down_lookup_table()
+            #self.page_down_lookup_table()
             return True
         return False
 
     def do_cursor_up(self):
-        if self.__lookup_table.cursor_up():
-            self.cursor_up_lookup_table()
-            return True
-        return False
+        self.__lookup_table.cursor_up()
+        print self.__lookup_table.get_candidate()
+        #if self.__lookup_table.cursor_up():
+            #self.cursor_up_lookup_table()
+        #    return True
+        #return False
 
     def do_cursor_down(self):
-        if self.__lookup_table.cursor_down():
-            self.cursor_down_lookup_table()
-            return True
-        return False
+        self.__lookup_table.cursor_down()
+        print self.__lookup_table.is_cursor_visible()
+        self.__lookup_table.set_cursor_visible(True)
+        cur_pos = self.__lookup_table.get_cursor_pos()
+        print IBus.Text.get_text(self.__lookup_table.get_candidate(cur_pos))
+        #if self.__lookup_table.cursor_down():
+            #self.cursor_down_lookup_table()
+            #return True
+        #return False
 
     def __commit_string(self, text):
+        
         self.commit_text(IBus.Text.new_from_string(text))
+        #self.commit_text(IBus.Text.new_from_string(self.__transliterator.transliterate(text)))
         self.__preedit_string = u""
         self.__update()
 
@@ -140,11 +159,13 @@ class EngineEnchant(IBus.Engine):
         attrs = IBus.AttrList()
         self.__lookup_table.clear()
         if preedit_len > 0:
-            if not self.__dict.check(self.__preedit_string):
-                attrs.append(IBus.Attribute.new(IBus.AttrType.FOREGROUND,
-                        0xff0000, 0, preedit_len))
-                for text in self.__dict.suggest(self.__preedit_string):
-                    self.__lookup_table.append_candidate(IBus.Text.new_from_string(text))
+            for text in self.__transliterator.anm(self.__transliterator.transliterate(self.__preedit_string)):
+                self.__lookup_table.append_candidate(IBus.Text.new_from_string(text))
+            #if not self.__dict.check(self.__preedit_string):
+            #    attrs.append(IBus.Attribute.new(IBus.AttrType.FOREGROUND,
+            #            0xff0000, 0, preedit_len))
+                #for text in self.__dict.suggest(self.__preedit_string):
+                #    self.__lookup_table.append_candidate(IBus.Text.new_from_string(text))
         text = IBus.Text.new_from_string(self.__preedit_string)
         text.set_attributes(attrs)
         self.update_auxiliary_text(text, preedit_len > 0)
