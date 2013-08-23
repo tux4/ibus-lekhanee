@@ -29,7 +29,7 @@ from gi.repository import Pango
 keysyms = IBus
 
 class EngineEnchant(IBus.Engine):
-    __gtype_name__ = 'EngineEnchant'
+    __gtype_name__ = 'IBus-Lekhanee'
     __dict = enchant.Dict("en")
 
     def __init__(self):
