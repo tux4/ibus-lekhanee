@@ -27,54 +27,39 @@ import sys
 import getopt
 import locale
 
-from engine import EngineEnchant
+from gi.repository import Gtk
 
-class IMApp:
-    def __init__(self, exec_by_ibus):
-        engine_name = "IBus Lekhanee (dbg)"
-        
-        """
-        self.__component = \
-                IBus.Component.new("org.freedesktop.IBus.Lekhanee",
-                                   "IBus Lekhanee",
-                                   "0.1.0",
-                                   "GPL",
-                                   "Prasanna Suman <prasanna.tux@gmail.com>",
-                                   "http://github.com/tux4/ibus-lekhanee",
-                                   "/usr/bin/exec",
-                                   "ibus-lekhanee")
-
-        engine = IBus.EngineDesc.new("IBus-Lekhanee",
-                                     engine_name,
-                                     "IBus Input Method for Indic Languages",
-                                     "Indic",
-                                     "GPL",
-                                     "Prasanna Suman <prasanna.tux@gmail.com>",
-                                     "ibus-lekhanee.svg",
-                                     "np")
-        self.__component.add_engine(engine)
-        """
+from engine import LekhaneeEngine 
+   
+class IMApp():
+    def __init__(self):
+        self.__lk_engine = LekhaneeEngine()
+        #self.__lk_engine.set_im(self)
         self.__component = IBus.Component.new_from_file("lekhanee.xml") 
         self.__mainloop = GLib.MainLoop()
         self.__bus = IBus.Bus()
         self.__bus.connect("disconnected", self.__bus_disconnected_cb)
         self.__factory = IBus.Factory.new(self.__bus.get_connection())
-        self.__factory.add_engine("Lekhanee",
-                GObject.type_from_name("Lekhanee"))
+        #self.__factory.add_engine("Lekhanee", GObject.type_from_name("Lekhanee"))
+        self.__factory.add_engine("Lekhanee", self.__lk_engine)
         self.__bus.register_component(self.__component)
-        self.__bus.set_global_engine_async(
-            "Lekhanee", -1, None, None, None)
+        self.__bus.set_global_engine_async("Lekhanee", -1, None, None, None)
+        
 
     def run(self):
+        IBus.init()
         self.__mainloop.run()
+
+    def test_fun(self):
+        print "Super Test Success"
 
     def __bus_disconnected_cb(self, bus):
         self.__mainloop.quit()
 
 
-def launch_engine(exec_by_ibus):
-    IBus.init()
-    IMApp(exec_by_ibus).run()
-
+def launch_engine():
+    win = IMApp()
+    win.run()
+    
 if __name__ == "__main__":
-    launch_engine(False)
+    launch_engine()

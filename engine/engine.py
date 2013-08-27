@@ -2,6 +2,7 @@
 #
 # ibus-tmpl - The Input Bus template project
 #
+# Copyright (c) 2013 Prasanna Suman <prasanna.tux@gmail.com>
 # Copyright (c) 2007-2012 Peng Huang <shawn.p.huang@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -26,25 +27,28 @@ from gi.repository import IBus
 from gi.repository import Pango
 #import panel
 #from panel import HelloWorld
+#from main import IMApp
+
 keysyms = IBus
 
-class EngineEnchant(IBus.Engine):
+class LekhaneeEngine(IBus.Engine):
     __gtype_name__ = 'Lekhanee'
     __dict = enchant.Dict("en")
 
     def __init__(self):
-        super(EngineEnchant, self).__init__()
+        super(LekhaneeEngine, self).__init__()
         self.__is_invalidate = False
         self.__preedit_string = u""
         self.__lookup_table = IBus.LookupTable.new(10, 0, True, True)
         self.__prop_list = IBus.PropList()
         self.__prop_list.append(IBus.Property(key="test", icon="ibus-local"))
-        print "Create EngineEnchant OK"
-        #self.__panel = panel.HelloWorld()
-        print "Panel Creation Done"
+        print "Create IBus Lekhanee OK"
+        print "Transliterator Creation Done"
         self.__transliterator = trans.transliterator(full_map_np.default)
+
+
     def do_process_key_event(self, keyval, keycode, state):
-        print "process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state)
+        #print "process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state)
         # ignore key release events
         is_press = ((state & IBus.ModifierType.RELEASE_MASK) == 0)
         if not is_press:
@@ -74,7 +78,7 @@ class EngineEnchant(IBus.Engine):
                 return False
             elif keyval >= 49 and keyval <= 57:
                 #keyval >= keysyms._1 and keyval <= keysyms._9
-                index = keyval - keysyms._1
+                index = keyval - 49 #keysyms.1
                 candidates = self.__lookup_table.get_canidates_in_current_page()
                 if index >= len(candidates):
                     return False
