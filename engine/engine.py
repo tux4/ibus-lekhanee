@@ -2,7 +2,6 @@
 #
 # ibus-tmpl - The Input Bus template project
 #
-# Copyright (c) 2013 Prasanna Suman <prasanna.tux@gmail.com>
 # Copyright (c) 2007-2012 Peng Huang <shawn.p.huang@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,14 +19,13 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 import enchant
-import full_map_np
-import trans
+
 from gi.repository import GLib
 from gi.repository import IBus
 from gi.repository import Pango
-#import panel
-#from panel import HelloWorld
-#from main import IMApp
+
+from libLekhanee.core.transliterator import Transliterator
+from libLekhanee.keymaps.ne_NP import base_keymap 
 
 keysyms = IBus
 
@@ -37,16 +35,20 @@ class LekhaneeEngine(IBus.Engine):
 
     def __init__(self):
         super(LekhaneeEngine, self).__init__()
+        #Transliterator
+        np_base_keymap = base_keymap.base_keymap
+        np_dictionary_file = "libLekhanee/dictionaries/ne_NP/ne_NP_plain.dic"
+        self.__transliterator = Transliterator("ne_NP", np_base_keymap, np_dictionary_file)
+
+        #
         self.__is_invalidate = False
         self.__preedit_string = u""
         self.__lookup_table = IBus.LookupTable.new(10, 0, True, True)
         self.__prop_list = IBus.PropList()
         self.__prop_list.append(IBus.Property(key="test", icon="ibus-local"))
-        print "Create IBus Lekhanee OK"
-        print "Transliterator Creation Done"
-        self.__transliterator = trans.transliterator(full_map_np.default)
+        print "Create Lekhanee OK"
 
-
+    
     def do_process_key_event(self, keyval, keycode, state):
         #print "process_key_event(%04x, %04x, %04x)" % (keyval, keycode, state)
         # ignore key release events
@@ -56,8 +58,8 @@ class LekhaneeEngine(IBus.Engine):
 
         if self.__preedit_string:
             if keyval == keysyms.Return:
-                print type(self.__preedit_string)
-                self.__commit_string(self.__preedit_string)
+                self.__commit_string(self.__get_lookup_candidate())
+                #self.__commit_string(self.__preedit_string)
                 return True
             elif keyval == keysyms.Escape:
                 self.__preedit_string = u""
@@ -68,22 +70,15 @@ class LekhaneeEngine(IBus.Engine):
                 self.__invalidate()
                 return True
             elif keyval == keysyms.space:
-                if self.__lookup_table.get_number_of_candidates() > 0:
-                    cur_pos = self.__lookup_table.get_cursor_pos()
-                    text = IBus.Text.get_text(self.__lookup_table.get_candidate(cur_pos))
-                    self.__commit_string(text)
-                else:
-                      self.__commit_string(self.__transliterator.transliterate(self.__preedit_string))
-                #self.__commit_string(self.__preedit_string)
+                self.__commit_string(self.__transliterator.transliterate(self.__preedit_string))
                 return False
             elif keyval >= 49 and keyval <= 57:
                 #keyval >= keysyms._1 and keyval <= keysyms._9
-                index = keyval - 49 #keysyms.1
-                candidates = self.__lookup_table.get_canidates_in_current_page()
-                if index >= len(candidates):
+                #index = keyval - keysyms._1
+                index = keyval - 49 
+                if index >= self.__lookup_table.get_number_of_candidates():
                     return False
-                candidate = candidates[index].text
-                self.__commit_string(candidate)
+                self.__commit_string(self.__get_lookup_candidate(index))
                 return True
             elif keyval == keysyms.Page_Up or keyval == keysyms.KP_Page_Up:
                 self.do_page_up()
@@ -98,8 +93,6 @@ class LekhaneeEngine(IBus.Engine):
                 self.do_cursor_down()
                 return True
             elif keyval == keysyms.Left or keyval == keysyms.Right:
-                print "table"
-                self.show_lookup_table()
                 return True
         if keyval in xrange(keysyms.a, keysyms.z + 1) or \
             keyval in xrange(keysyms.A, keysyms.Z + 1):
@@ -113,6 +106,15 @@ class LekhaneeEngine(IBus.Engine):
 
         return False
 
+    def __get_lookup_candidate(self, index = None):
+        if index:
+            cur_pos = index
+        else:
+            cur_pos = self.__lookup_table.get_cursor_pos()
+        return IBus.Text.get_text(self.__lookup_table.get_candidate(cur_pos))
+
+            
+        
     def __invalidate(self):
         if self.__is_invalidate:
             return
@@ -122,55 +124,46 @@ class LekhaneeEngine(IBus.Engine):
 
     def do_page_up(self):
         if self.__lookup_table.page_up():
-            #self.page_up_lookup_table()
+            self.__lookup_table.page_up()
             return True
         return False
 
     def do_page_down(self):
         if self.__lookup_table.page_down():
-            #self.page_down_lookup_table()
+            self.__lookup_table.page_down()
             return True
         return False
 
     def do_cursor_up(self):
-        self.__lookup_table.cursor_up()
-        print self.__lookup_table.get_candidate()
-        #if self.__lookup_table.cursor_up():
-            #self.cursor_up_lookup_table()
-        #    return True
-        #return False
+        if self.__lookup_table.cursor_up():
+            self.__lookup_table.cursor_up()
+            return True
+        return False
 
     def do_cursor_down(self):
-        self.__lookup_table.cursor_down()
-        print self.__lookup_table.is_cursor_visible()
-        self.__lookup_table.set_cursor_visible(True)
-        cur_pos = self.__lookup_table.get_cursor_pos()
-        print IBus.Text.get_text(self.__lookup_table.get_candidate(cur_pos))
-        #if self.__lookup_table.cursor_down():
-            #self.cursor_down_lookup_table()
-            #return True
-        #return False
+        if self.__lookup_table.cursor_down():
+            self.__lookup_table.cursor_down()
+            return True
+        return False
 
     def __commit_string(self, text):
-        
         self.commit_text(IBus.Text.new_from_string(text))
-        #self.commit_text(IBus.Text.new_from_string(self.__transliterator.transliterate(text)))
         self.__preedit_string = u""
         self.__update()
 
     def __update(self):
+        transliterated_text = self.__transliterator.transliterate(self.__preedit_string)
         preedit_len = len(self.__preedit_string)
         attrs = IBus.AttrList()
         self.__lookup_table.clear()
         if preedit_len > 0:
-            for text in self.__transliterator.anm(self.__transliterator.transliterate(self.__preedit_string)):
-                self.__lookup_table.append_candidate(IBus.Text.new_from_string(text))
-            #if not self.__dict.check(self.__preedit_string):
-            #    attrs.append(IBus.Attribute.new(IBus.AttrType.FOREGROUND,
-            #            0xff0000, 0, preedit_len))
-                #for text in self.__dict.suggest(self.__preedit_string):
-                #    self.__lookup_table.append_candidate(IBus.Text.new_from_string(text))
-        text = IBus.Text.new_from_string(self.__preedit_string)
+            if not self.__dict.check(self.__preedit_string):
+                attrs.append(IBus.Attribute.new(IBus.AttrType.FOREGROUND,
+                        0xff0000, 0, preedit_len))
+                for text in self.__transliterator.check_and_suggest(transliterated_text):
+                    self.__lookup_table.append_candidate(IBus.Text.new_from_string(text))
+                self.__lookup_table.append_candidate(IBus.Text.new_from_string(self.__preedit_string))
+        text = IBus.Text.new_from_string(transliterated_text) 
         text.set_attributes(attrs)
         self.update_auxiliary_text(text, preedit_len > 0)
 

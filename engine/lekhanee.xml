@@ -14,7 +14,7 @@
     <engines>
         <engine>
             <name>Lekhanee</name>
-            <language>np</language>
+            <language>ne</language>
             <license>GPL</license>
             <author>Prasanna Suman: &lt;prasanna.tux@gmail.com&gt;</author>
             <icon>ibus-Lekhanee.svg</icon>
