@@ -12,10 +12,19 @@ or,
 >run start.sh 
  The standard IBus shortcuts are used to activate and change the IM, so use [Ctrl]+[Space] to start, [Alt]+[/] to switch.
 
+###Dependencies
+Make sure the following dependencies are met:
+
+   - ibus
+   - gobject-introspection
+   - gir1.2-ibus-1.0
+   - python-enchant
+   - ibus-m17n (Optional) 
+
  GPL2
 ##News
  1) I am currently in the process of cleaning up the code. That begins with separating the transliterator as its own library because it can be used in many other cases and not just this. 
 
 ##Goals
  TODO
- 1) Find all the dependencies so others can use it.
+ [x] Find all the dependencies so others can use it.
