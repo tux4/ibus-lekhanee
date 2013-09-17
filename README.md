@@ -1,7 +1,7 @@
 ##Input Method for Indic Languages for IBus.
 Prasanna Suman
 
-This is a quick and dirty code as a proof of concept for better IM for Indic Languages based on IBus template.
+This is a quick proof of concept for better IM for Indic Languages based on IBus template.
 I have been working with Nepali as an example although I plan to make it easily extendible for other Indic scripts.
 
 To run, make sure your IBus daemon is running. 
@@ -18,4 +18,4 @@ or,
 
 ##Goals
  TODO
-
+ 1) Find all the dependencies so others can use it.
